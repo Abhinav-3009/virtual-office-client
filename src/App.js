@@ -4,11 +4,13 @@ import SignIn from "./pages/signin";
 import Register from "./pages/register";
 import Home from "./pages/home";
 import { UserProvider } from "./context/userContext";
+import Header from "./components/header";
 
 function App() {
   return (
     <UserProvider>
       <Router>
+        <Header />
         <Routes>
           <Route
             path="/"
