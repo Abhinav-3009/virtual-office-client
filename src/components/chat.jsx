@@ -31,7 +31,7 @@ const Chat = () => {
   const sendMessage = () => {
     if (message) {
       const chatMessage = { nickname: user?.username.charAt(0).toUpperCase() || "U", content: message };
-      client.send("/app/chat", {}, JSON.stringify(chatMessage));
+      client.send("/app/broadcast", {}, JSON.stringify(chatMessage));
       setMessage("");
     }
   };
