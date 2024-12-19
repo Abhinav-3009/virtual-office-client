@@ -2,24 +2,60 @@ import React, { useState } from "react";
 import { login } from "../api/auth";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../context/userContext";
+import { Stomp } from "@stomp/stompjs";
+import SockJS from "sockjs-client";
 
 export default function SignIn() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const { setUser } = useUser();
+  const { user,setUser } = useUser();
   const navigate = useNavigate();
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       const data = await login(username, password);
       setUser({ username: data.username });
+      //added for chat functionality
+      makeUserOnline(username);
       navigate("/home");
     } catch (error) {
       console.log("error triggered", error);
       setError("Invalid username or password");
     }
   };
+
+  const makeUserOnline = (username) => {
+    const socket = new SockJS('http://localhost:8080/ws');
+    const client = Stomp.over(socket);
+    // Connect to WebSocket and send the disconnect message
+    client.connect({}, () => {
+    console.log('Connected to WebSocket for logout');
+
+    // Notify the server that the user is disconnecting
+    client.send(
+      "/app/user.disconnectUser",
+      {},
+      JSON.stringify({
+        username: user.username, // Replace with actual user data
+        fullname: user.username,
+        status: "ONLINE",
+      })
+    );
+
+    console.log(`User ${user.username} is now online`);
+
+    // Disconnect WebSocket after sending the message
+    client.disconnect(() => {
+      console.log('WebSocket disconnected');
+    });
+  }, (error) => {
+    console.error('WebSocket connection error during logout:', error);
+  });
+  };
+
+
   return (
     <>
       <div className="flex min-h-full flex-1 flex-col justify-center px-6 py-12 lg:px-8">

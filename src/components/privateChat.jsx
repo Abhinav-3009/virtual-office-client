@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import SockJS from 'sockjs-client';
-import Stomp from 'stompjs';
-import './App.css';
+import { Stomp } from "@stomp/stompjs";
+import SockJS from "sockjs-client";
+import '../CSS/privateChat.css';
 import { useUser } from '../context/userContext';
 
 const PrivateChat = () => {
@@ -23,16 +23,21 @@ const PrivateChat = () => {
     // Initialize WebSocket connection
     const socket = new SockJS('http://localhost:8080/ws');
     const client = Stomp.over(socket);
-
     client.connect({}, () => {
       console.log('Connected to WebSocket');
       setStompClient(client);
 
       // Subscribe to private messages
       client.subscribe(`/user/${user.username}/queue/messages`, onMessageReceived);
-      stompClient.subscribe(`/user/public`, onMessageReceived); //added by gourav
+      client.subscribe(`/user/public`, onMessageReceived); //added by gourav
 
       //GOURAV _ need to check connect USER : call in login page
+      // register the connected user
+      client.send("/app/user.connectUser",
+        {},
+        JSON.stringify({username: user.username, fullname: user.username, status: 'ONLINE'})
+      );
+
 
       // Fetch connected users on initial connection
       fetchConnectedUsers();
@@ -42,11 +47,13 @@ const PrivateChat = () => {
       if (client) client.disconnect();
       console.log('Disconnected from WebSocket');
     };
-  }, [user]);
+  //}, [user]);
+}, []);
 
   const fetchConnectedUsers = async () => {
     const response = await fetch('http://localhost:8080/connectedUsers');
     const users = await response.json();
+    //console.log(users);
     const filteredUsers = users.filter((u) => u.username !== user.username);
     setConnectedUsers(filteredUsers);  //store the connected users in variable created above
   };
@@ -57,29 +64,69 @@ const PrivateChat = () => {
     setMessages(chatMessages);
   };
 
+  // const onMessageReceived = (messagePayload) => {
+  //   //await fetchConnectedUsers();
+  //   //Gourav - check udpated conn discoonn users
+  //   const message = JSON.parse(messagePayload.body);
+  //   console.log('Message received:', message);
+  //   console.log(connectedUsers);
+  //   // Update messages if it's from the selected user
+  //   if (selectedUser === message.senderId) {
+  //     setMessages((prevMessages) => [...prevMessages, message]);  //Gourav check prevMessages
+  //   } else {
+  //     // Mark the sender in the user list
+  //     console.log("conn/disconn users should be updated");  
+  //     setConnectedUsers((prevUsers) =>
+  //       prevUsers.map((u) =>
+  //         u.username === message.senderId ? { ...u, hasNewMessage: true } : u  
+  //     //This is a functional form of setConnectedUsers. Instead of passing a new value directly, you provide a function that receives the current state (prevUsers) and returns the updated state.
+  //     //Functional updates are useful when the new state depends on the previous state, ensuring the latest value is used.
+  //     //Initially, when the connectedUsers list is fetched, this property might not exist. It is added dynamically in the code as needed, based on incoming messages
+  //       )
+  //     );
+  //     console.log(connectedUsers);
+  //   }
+  // };
+
   const onMessageReceived = (messagePayload) => {
-    //Gourav - check udpated conn discoonn users
     const message = JSON.parse(messagePayload.body);
     console.log('Message received:', message);
-
-    // Update messages if it's from the selected user
-    if (selectedUser === message.senderId) {
-      setMessages((prevMessages) => [...prevMessages, message]);  //Gourav check prevMessages
+  
+    if (message.status === 'OFFLINE' && message.username) {
+      // Remove the user from the connected users list
+      setConnectedUsers((prevUsers) =>
+        prevUsers.filter((u) => u.username !== message.username)
+      );
+      console.log(`User ${message.username} has been disconnected.`);
+    } else if (message.status === 'ONLINE' && message.username && message.username!==user.username) {
+      // Add the user to the connected users list if not already present
+      setConnectedUsers((prevUsers) => {
+        const userExists = prevUsers.some((u) => u.username === message.username);
+        if (!userExists) {
+          return [...prevUsers, { username: message.username, hasNewMessage: false }];
+        }
+        return prevUsers; // User already exists, no need to add
+      });
+      console.log(`User ${message.username} has been connected.`);
+    } else if (selectedUser === message.senderId) {
+      // Add the message to the selected user's chat
+      setMessages((prevMessages) => [...prevMessages, message]);
     } else {
-      // Mark the sender in the user list
+      // Mark the user as having a new message
       setConnectedUsers((prevUsers) =>
         prevUsers.map((u) =>
           u.username === message.senderId ? { ...u, hasNewMessage: true } : u
         )
       );
+      console.log("conn/disconn users should be updated");
     }
   };
 
   const handleUserSelect = (username) => {
-    setSelectedUser(username);
+    setSelectedUser(username);  //problem
     fetchMessages(username);
     setConnectedUsers((prevUsers) =>
-      prevUsers.map((u) => (u.username === username ? { ...u, hasNewMessage: false } : u))
+      prevUsers.map((u) => (u.username === username ? { ...u, hasNewMessage: false } : u))  //to remove notification
     );
   };
 
@@ -111,14 +158,17 @@ const PrivateChat = () => {
               className={`user-item ${selectedUser === u.username ? 'active' : ''}`}
               onClick={() => handleUserSelect(u.username)}
             >
-              <img src="/img/user_icon.png" alt={u.fullname} />
-              <span>{u.fullname}</span>
+              {/* <img src="/img/user_icon.png" alt={u.fullname} /> */}
+              {/*<img src="/img/user_icon.png" alt={u.username} />*/}
+              {/* <span>{u.fullname}</span> */}
+              <span>{u.username}</span>
               {u.hasNewMessage && <span className="new-message-indicator">•</span>}
             </li>
           ))}
         </ul>
         <div className="current-user">
-          <p>Logged in as: {user.fullname}</p>
+          {/* <p>Logged in as: {user.fullname}</p> */}
+          <p>Logged in as: {user.username}</p>
         </div>
       </div>
 
@@ -128,9 +178,7 @@ const PrivateChat = () => {
           {messages.map((msg, index) => (
             <div
               key={index}
-              className={`message ${
-                msg.senderId === user.username ? 'sender' : 'receiver'
-              }`}
+              className={`message ${msg.senderId === user.username ? 'sender' : 'receiver'}`}
             >
               <p>{msg.content}</p>
             </div>
