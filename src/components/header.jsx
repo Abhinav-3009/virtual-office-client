@@ -1,6 +1,8 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../context/userContext";
+import { Stomp } from "@stomp/stompjs";
+import SockJS from "sockjs-client";
 import { logout } from "../api/auth";
 
 export default function Header() {
@@ -9,6 +11,36 @@ export default function Header() {
 
   const handleLogout = async () => {
     try {
+      // Initialize WebSocket connection
+  const socket = new SockJS('http://localhost:8080/ws');
+  const client = Stomp.over(socket);
+
+  // Connect to WebSocket and send the disconnect message
+  client.connect({}, () => {
+    console.log('Connected to WebSocket for logout');
+
+    // Notify the server that the user is disconnecting
+    client.send(
+      "/app/user.disconnectUser",
+      {},
+      JSON.stringify({
+        username: user.username, // Replace with actual user data
+        fullname: user.username,
+        status: "OFFLINE",
+      })
+    );
+
+    console.log(`User ${user.username} is now offline`);
+
+    // Disconnect WebSocket after sending the message
+    client.disconnect(() => {
+      console.log('WebSocket disconnected');
+    });
+  }, (error) => {
+    console.error('WebSocket connection error during logout:', error);
+  });
+
+
       await logout();
       setUser(null);
       localStorage.removeItem("user");
