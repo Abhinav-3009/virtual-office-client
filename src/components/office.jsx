@@ -6,7 +6,12 @@ import webSocketService from '../hooks/webSocketService';
 
 
 const CELL_SIZE = 40;
-const FURNITURE = [/* your existing furniture array */];
+const FURNITURE = [
+  { x: 3, y: 3, width: 3, height: 4, type: 'Desk', color: 'grey' },
+  { x: 10, y: 3, width: 2, height: 2, type: 'Plant', color: 'green' },
+  { x: 7, y: 8, width: 4, height: 2, type: 'Meeting Table', color: 'brown' },
+  { x: 2, y: 8, width: 2, height: 2, type: 'Cabinet', color: 'darkgrey' }
+];
 
 const Office = () => {
   const { user } = useUser();
@@ -15,14 +20,18 @@ const Office = () => {
     height: window.innerHeight
   });
   const [userPositions, setUserPositions] = useState({});
-  const [avatarPos, setAvatarPos] = useState({ x: 5, y: 5 });
+  const [avatarPos, setAvatarPos] = useState({ x: 6, y: 5 });
 
   // Calculate grid dimensions
   const gridWidth = Math.floor(dimensions.width / CELL_SIZE);
   const gridHeight = Math.floor(dimensions.height / CELL_SIZE);
 
   useEffect(() => {
-    // Handle window resize
+    if (!user?.username) {
+      console.warn('No user data available');
+      return;
+    }
+
     const handleResize = () => {
       setDimensions({
         width: window.innerWidth,
@@ -32,12 +41,16 @@ const Office = () => {
 
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  }, [user]);
 
   useEffect(() => {
+    if (!user?.username) return;
+
     // Set up WebSocket connection and subscriptions
     webSocketService.subscribe('/user/public', (data) => {
+      if (data) {
       setUserPositions(data);
+      }
     });
 
     // Send join message with initial position
@@ -49,12 +62,16 @@ const Office = () => {
 
     // Cleanup on unmount
     return () => {
-      webSocketService.send('/app/office.leave', user.username);
-      webSocketService.disconnect();
+      if (user?.username) {
+        webSocketService.send('/app/office.leave', user.username);
+        webSocketService.disconnect();
+      }
     };
-  }, []);
+  }, [user]);
 
   useEffect(() => {
+    if (!user?.username) return;
+
     const handleKeyDown = (e) => {
       const moveMap = {
         ArrowUp: { x: 0, y: -1 },
@@ -93,6 +110,10 @@ const Office = () => {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [avatarPos, gridWidth, gridHeight, user]);
+
+  if (!user?.username) {
+    return <div>Loading user data...</div>;
+  }
 
   return (
     <Stage width={dimensions.width} height={dimensions.height}>
@@ -140,14 +161,17 @@ const Office = () => {
         ))}
 
         {/* Render all users */}
-        {Object.values(userPositions).map((userPos) => (
+        {Object.values(userPositions || {}).map((userPos) => {
+          if (!userPos?.username || !userPos?.x || !userPos?.y) return null;
+          return (
           <Avatar 
             key={userPos.username}
             position={{ x: userPos.x, y: userPos.y }}
             username={userPos.username}
             isCurrentUser={userPos.username === user.username}
           />
-        ))}
+          );
+        })}
       </Layer>
     </Stage>
   );

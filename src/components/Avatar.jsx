@@ -5,6 +5,10 @@ const CELL_SIZE = 40;
 const AVATAR_SIZE = 30;
 
 const Avatar = ({ position, username, isCurrentUser }) => {
+  if (!position || typeof position.x !== 'number' || typeof position.y !== 'number') {
+    return null;
+  }
+
   return (
     <Group>
       <Rect
