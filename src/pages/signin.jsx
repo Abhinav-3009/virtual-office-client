@@ -33,9 +33,9 @@ export default function SignIn() {
     client.connect({}, () => {
     console.log('Connected to WebSocket for logout');
 
-    // Notify the server that the user is disconnecting
+    // Notify the server that the user is connecting
     client.send(
-      "/app/user.disconnectUser",
+      "/app/user.connectUser",
       {},
       JSON.stringify({
         username: user.username, // Replace with actual user data

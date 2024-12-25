@@ -3,6 +3,7 @@ import { Stage, Layer, Rect, Text, Line, Group } from 'react-konva';
 import Avatar from '../components/Avatar';
 import { useUser } from '../context/userContext';
 import webSocketService from '../hooks/webSocketService';
+import EnhancedChat from './enhancedChat';
 
 
 const CELL_SIZE = 40;
@@ -116,6 +117,7 @@ const Office = () => {
   }
 
   return (
+    <>
     <Stage width={dimensions.width} height={dimensions.height}>
       <Layer>
         {/* Background */}
@@ -174,6 +176,8 @@ const Office = () => {
         })}
       </Layer>
     </Stage>
+    <EnhancedChat userPositions={userPositions} avatarPos={avatarPos} />
+    </>
   );
 };
 

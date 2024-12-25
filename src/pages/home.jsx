@@ -8,7 +8,7 @@ function Home() {
     <div className="home">
       <h1 className="text-5xl bg-slate-700">This is the home page.</h1>
       <div className="fixed inset-0 overflow-hidden">
-      <Office />
+      <Office/>
       </div>
     </div>
   );
