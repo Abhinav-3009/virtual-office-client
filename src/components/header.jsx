@@ -51,7 +51,7 @@ export default function Header() {
   };
 
   return (
-    <header className="flex justify-between items-center p-4 bg-gray-800 text-white">
+    <header className="fixed top-0 left-0 w-full flex justify-between items-center p-4 bg-gray-800 text-white z-50">
       <h1 className="text-2xl font-bold">Metaverse</h1>
       <div className="flex items-center gap-4">
         {user && <span>Welcome, {user.username || "Guest"}</span>}
@@ -66,4 +66,5 @@ export default function Header() {
       </div>
     </header>
   );
+  
 }

@@ -63,31 +63,7 @@ const PrivateChat = () => {
     const chatMessages = await response.json();
     setMessages(chatMessages);
   };
-
-  // const onMessageReceived = (messagePayload) => {
-  //   //await fetchConnectedUsers();
-  //   //Gourav - check udpated conn discoonn users
-  //   const message = JSON.parse(messagePayload.body);
-  //   console.log('Message received:', message);
-  //   console.log(connectedUsers);
-  //   // Update messages if it's from the selected user
-  //   if (selectedUser === message.senderId) {
-  //     setMessages((prevMessages) => [...prevMessages, message]);  //Gourav check prevMessages
-  //   } else {
-  //     // Mark the sender in the user list
-  //     console.log("conn/disconn users should be updated");  
-  //     setConnectedUsers((prevUsers) =>
-  //       prevUsers.map((u) =>
-  //         u.username === message.senderId ? { ...u, hasNewMessage: true } : u  
-  //     //This is a functional form of setConnectedUsers. Instead of passing a new value directly, you provide a function that receives the current state (prevUsers) and returns the updated state.
-  //     //Functional updates are useful when the new state depends on the previous state, ensuring the latest value is used.
-  //     //Initially, when the connectedUsers list is fetched, this property might not exist. It is added dynamically in the code as needed, based on incoming messages
-  //       )
-  //     );
-  //     console.log(connectedUsers);
-  //   }
-  // };
-
+  
   const onMessageReceived = (messagePayload) => {
     const message = JSON.parse(messagePayload.body);
     console.log('Message received:', message);
