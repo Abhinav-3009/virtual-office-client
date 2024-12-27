@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Stomp } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import { useUser } from '../context/userContext';
@@ -24,10 +24,18 @@ const EnhancedChat = ({ userPositions = {}, avatarPos }) => {
   const [client, setClient] = useState(null);
   const [nearbyUsers, setNearbyUsers] = useState([]);
 
+  //to solve multiple subscriptions
+  const clientRef = useRef(null);
+
   // WebSocket Connection
   useEffect(() => {
+    if (clientRef.current) {
+      //to solve multiple subscriptions Avoid re-initializing WebSocket if already connected
+      return;
+    }
     const socket = new SockJS('http://localhost:8080/ws');
     const client = Stomp.over(socket);
+    clientRef.current = client;
 
     client.connect({}, () => {
       // Broadcast channel subscription
@@ -37,13 +45,14 @@ const EnhancedChat = ({ userPositions = {}, avatarPos }) => {
           ...prev,
           broadcast: [...prev.broadcast, receivedMessage]
         }));
-        console.log("message received: ",messages);
+        //console.log("message received: ",messages);
       });
 
       // Private channel subscription
       client.subscribe(`/user/${user.username}/queue/messages`, (message) => {
-        const receivedMessage = JSON.parse(message.body);
-        console.log("received message :::::", receivedMessage);
+        const receivedMessage_old = JSON.parse(message.body);
+        const receivedMessage= {...receivedMessage_old, timestamp: new Date().toISOString()};
+        //console.log("rcvd message :::::", receivedMessage);
         const senderId = receivedMessage.senderId;
         setMessages(prev => ({
           ...prev,
@@ -52,15 +61,16 @@ const EnhancedChat = ({ userPositions = {}, avatarPos }) => {
             [senderId]: [...(prev.proximity[senderId] || []), receivedMessage]
           }
         }));
-        console.log("messages for user", messages);
+        //console.log("messages for user", messages);
       });
     });
 
     setClient(client);
 
     return () => {
-      if (client && client.connected) {
-        client.disconnect();
+      if (clientRef.current && clientRef.current.connected) {
+        clientRef.current.disconnect();
+        clientRef.current = null; // Reset the clientRef
       }
     };
   }, [user.username]);
@@ -80,6 +90,10 @@ const EnhancedChat = ({ userPositions = {}, avatarPos }) => {
       .map(([username]) => username);
 
     setNearbyUsers(nearby);
+
+    //condition to make broadcast active when selected user goes out of proximity
+    if(!nearby.includes(activeChannel)) setActiveChannel('broadcast');
+
   }, [userPositions, avatarPos, user.username]);
 
   const sendMessage = () => {
@@ -141,6 +155,9 @@ const EnhancedChat = ({ userPositions = {}, avatarPos }) => {
 
       {/* Channel List */}
       <div className="p-2 border-b">
+        <div className="italic font-bold">
+          Chats:
+        </div>
         <div 
           className={`p-2 cursor-pointer rounded flex items-center ${
             activeChannel === 'broadcast' ? 'bg-blue-100' : 'hover:bg-gray-100'
@@ -189,7 +206,7 @@ const EnhancedChat = ({ userPositions = {}, avatarPos }) => {
               )}
               <strong>{msg.senderId}:</strong> {msg.content}
               <div className="text-xs opacity-75 mt-1">
-                {new Date(msg.timestamp).toLocaleTimeString()}
+                {new Date(msg.timestamp).toLocaleString()}
               </div>
             </div>
           </div>
