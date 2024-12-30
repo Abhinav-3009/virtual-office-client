@@ -1,5 +1,4 @@
 export const login = async (username, password) => {
-  console.log(`${process.env.REACT_APP_API_URL}`);
   const response = await fetch(`${process.env.REACT_APP_API_URL}/api/auth/login`, {
     method: "POST",
     headers: {
