@@ -33,7 +33,7 @@ const EnhancedChat = ({ userPositions = {}, avatarPos }) => {
       //to solve multiple subscriptions Avoid re-initializing WebSocket if already connected
       return;
     }
-    const socket = new SockJS('http://localhost:8080/ws');
+    const socket = new SockJS(`${process.env.REACT_APP_API_URL}/ws`);
     const client = Stomp.over(socket);
     clientRef.current = client;
 

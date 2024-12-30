@@ -21,7 +21,7 @@ const PrivateChat = () => {
 
   useEffect(() => {
     // Initialize WebSocket connection
-    const socket = new SockJS('http://localhost:8080/ws');
+    const socket = new SockJS(`${process.env.REACT_APP_API_URL}/ws`);
     const client = Stomp.over(socket);
     client.connect({}, () => {
       console.log('Connected to WebSocket');
@@ -51,7 +51,7 @@ const PrivateChat = () => {
 }, []);
 
   const fetchConnectedUsers = async () => {
-    const response = await fetch('http://localhost:8080/connectedUsers');
+    const response = await fetch(`${process.env.REACT_APP_API_URL}/connectedUsers`);
     const users = await response.json();
     //console.log(users);
     const filteredUsers = users.filter((u) => u.username !== user.username);
@@ -59,7 +59,7 @@ const PrivateChat = () => {
   };
 
   const fetchMessages = async (recipientId) => {
-    const response = await fetch(`http://localhost:8080/messages/${user.username}/${recipientId}`);
+    const response = await fetch(`${process.env.REACT_APP_API_URL}/messages/${user.username}/${recipientId}`);
     const chatMessages = await response.json();
     setMessages(chatMessages);
   };

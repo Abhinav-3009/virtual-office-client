@@ -101,7 +101,7 @@ const Chat = () => {
   const [client, setClient] = useState(null);
 
   useEffect(() => {
-    const socket = new SockJS('http://localhost:8080/ws');
+    const socket = new SockJS(`${process.env.REACT_APP_API_URL}/ws`);
     const stompClient = Stomp.over(socket);
 
     // Optional: Enable debug logging
