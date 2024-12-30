@@ -12,7 +12,7 @@ class WebSocketService {
       if (this.connectionPromise) return this.connectionPromise;
   
       this.connectionPromise = new Promise((resolve, reject) => {
-        const socket = new SockJS('http://localhost:8080/ws');
+        const socket = new SockJS(`${process.env.REACT_APP_API_URL}/ws`);
         this.stompClient = Stomp.over(socket);
         
         // Properly disable debug logging

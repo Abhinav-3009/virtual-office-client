@@ -1,5 +1,6 @@
 export const login = async (username, password) => {
-  const response = await fetch("http://localhost:8080/api/auth/login", {
+  console.log(`${process.env.REACT_APP_API_URL}`);
+  const response = await fetch(`${process.env.REACT_APP_API_URL}/api/auth/login`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -19,7 +20,7 @@ export const login = async (username, password) => {
 };
 
 export const register = async (username, password) => {
-  const response = await fetch("http://localhost:8080/api/auth/register", {
+  const response = await fetch(`${process.env.REACT_APP_API_URL}/api/auth/register`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -38,7 +39,7 @@ export const register = async (username, password) => {
 };
 
 export const logout = async () => {
-  const response = await fetch("http://localhost:8080/api/auth/logout", {
+  const response = await fetch(`${process.env.REACT_APP_API_URL}/api/auth/logout`, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",

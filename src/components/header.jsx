@@ -12,7 +12,7 @@ export default function Header() {
   const handleLogout = async () => {
     try {
       // Initialize WebSocket connection
-  const socket = new SockJS('http://localhost:8080/ws');
+  const socket = new SockJS(`${process.env.REACT_APP_API_URL}/ws`);
   const client = Stomp.over(socket);
 
   // Connect to WebSocket and send the disconnect message
